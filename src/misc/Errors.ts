@@ -5,4 +5,11 @@ class RowDoesNotExistError extends Error {
     }
 }
 
-export { RowDoesNotExistError };
+class InvalidCredentialsError extends Error {
+    constructor(msg: string){
+        super(msg);
+        this.name = 'InvalidCredentials';
+    }
+}
+
+export { RowDoesNotExistError, InvalidCredentialsError };
