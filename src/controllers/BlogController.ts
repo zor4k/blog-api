@@ -13,6 +13,7 @@ interface IBlogController{
     getPost(req: express.Request , res: express.Response): Promise<void>
     createPost(req: express.Request, res: express.Response): Promise<void>
     deletePost(req:express.Request, res:express.Response) : Promise<void>
+    updatePost( req: express.Request, res:express.Response ): Promise<void>
     
 }
 
@@ -138,6 +139,50 @@ const BlogController: IBlogController =  {
 
         await blogModel.deletePost(id);
         res.sendStatus(200);
+    },
+    updatePost : async (req:express.Request, res: express.Response ) =>{
+
+        const bearerHeader = req.headers["authorization"];
+
+        if(!bearerHeader){
+            res.sendStatus(401);
+            return;
+        }
+
+        // checking if the token is blacklisted 
+        const token: string = (bearerHeader.split(' '))[1];
+
+        redisClient.GET(`blacklist:${token}`, function(err, reply){
+            if(!reply){
+                res.status(401).send({err: "An invalid token was sent"});
+            }
+        });
+        
+        try {
+            jwt.verify(token, SECRET);
+
+        } catch (err: any) {
+            if(err.name ==='JsonWebTokenError' ){
+                res.status(401).send({err: "An invalid token was sent."});
+            } else{
+                res.sendStatus(500);
+            }
+            return;
+        }
+
+        const { title, id , content } = req.body;
+        // title string, id:string, content: string, userId:string
+        // TODO need to get the user id
+        try{
+            await blogModel.updatePost(id, content , title)
+            res.sendStatus(200);
+
+        } catch(err: any)
+        {
+            res.status(500).send();
+            console.log(err);
+            
+        }
     }
 
 }

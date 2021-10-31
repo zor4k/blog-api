@@ -17,9 +17,15 @@ app.use(function(req, res, next) {
 })
 
 router.route("/blog/:title")
-    .get(BlogController.getPost);
+    .get(BlogController.getPost)
+    .delete(BlogController.deletePost);
+
+router.route("/blog/")
+    .get(BlogController.getPosts)
+    .post(BlogController.createPost)
+    .put(BlogController.updatePost)
 
 // base endpoint for the application
-app.use( '/api', router);
+app.use( '/', router)
 
 app.listen(PORT,() => console.log(`listening on port ${PORT}... `))
