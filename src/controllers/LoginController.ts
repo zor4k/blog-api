@@ -2,15 +2,16 @@ import express from 'express';
 import crypto from 'crypto';
 import UserModel from '../models/UserModel';
 import { InvalidCredentialsError } from '../misc/Errors';
-import jwt, { JsonWebTokenError } from 'jsonwebtoken';
-
+import jwt, { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
+import redis from 'redis';
 const SECRET : string = process.env.SECRET || 'ONLY_FOR_TESTING';
 
 interface ILoginController {
     login(req: express.Request, res: express.Response ): Promise<void>
-
-    //logout(req: express.Request, res: express.Response ): Promise<void>
+    logout(req: express.Request, res: express.Response ): Promise<void>
 }
+
+const redisClient = redis.createClient();
 
 
 const LoginController :ILoginController = {
@@ -56,7 +57,10 @@ const LoginController :ILoginController = {
                 res.sendStatus(400);
                 return;
             }
-            var token = jwt.sign(user , SECRET);
+            // set the expire time for the token to 1 hour
+            var token = jwt.sign(user , SECRET, {expiresIn : "1h"} , ()=>{
+
+            });
             res.send({ token });
 
         } catch (err){
@@ -64,6 +68,20 @@ const LoginController :ILoginController = {
             return;
         }
 
+    },
+    logout :async  (req: express.Request, res: express.Response) => {
+        const userJwt = req.body.jwt;
+        try{
+            const decoded : any = jwt.verify(userJwt, SECRET);
+
+            const secondsExpire = Date.now() - decoded.exp;
+
+            redisClient.SETEX(`blackList:${userJwt}`, secondsExpire ,"true" );
+
+
+        } catch(err){
+            res.sendStatus(401);
+        }
     }
 }
 
