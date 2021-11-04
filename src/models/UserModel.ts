@@ -54,16 +54,24 @@ const UserModel : IUserModel =  {
         if(rows.length === 0){
             throw new InvalidCredentialsError("");
         }
-        return rows[0];
+        return {
+            username: rows[0].username,
+            email: rows[0].email,
+            id: rows[0].id
+        };
     },
 
     getUserByUsername: async (email: string) =>{
-        const sql = 'SELECT username, email, id FROM User WHERE email = ?';
+        const sql = 'SELECT username, email, id FROM User WHERE username= ?';
         const [ rows , ] = await pool.query(sql, email);
         if(rows.length === 0){
             throw new InvalidCredentialsError("");
         }
-        return rows[0];
+        return {
+            username: rows[0].username,
+            email: rows[0].email,
+            id: rows[0].id
+        };
     }
 }
 

@@ -18,8 +18,7 @@ const LoginController :ILoginController = {
     login: async function (req: express.Request, res: express.Response ){
         const { email, username, password } = req.body;
         //TODO get the username OR email of the user
-        const passwordHash = crypto.createHash('md5').update(password).digest('base64');
-        //TODO take the username/email and password hash and look for them within the database. 
+        const passwordHash = crypto.createHash('sha256').update(password).digest('base64');
 
         try {
             let passwordHashDb: string;
@@ -28,17 +27,16 @@ const LoginController :ILoginController = {
 
             // grabbing the password hash from the database and comparing it with 
             // the hash of the current user password
-            if(!email){
-                passwordHashDb = await UserModel.getPasswordHashByUsername(passwordHash);
+            if(username){
 
+                passwordHashDb = await UserModel.getPasswordHashByUsername(username);
                 if(passwordHash !== passwordHashDb){
+                    console.log('not true')
                     throw new InvalidCredentialsError("");
                 }
-
                 user = await UserModel.getUserByUsername(username);
-
-            } else if (!username){
-                passwordHashDb = await UserModel.getPasswordHashByEmail(passwordHash);
+            } else if (email){
+                passwordHashDb = await UserModel.getPasswordHashByEmail(email);
 
                 if(passwordHash !== passwordHashDb){
                     throw new InvalidCredentialsError("");
@@ -52,19 +50,19 @@ const LoginController :ILoginController = {
                 res.sendStatus(400);
                 return;
             }
-
-            if(passwordHash !== passwordHashDb){
-                res.sendStatus(400);
-                return;
-            }
+            
             // set the expire time for the token to 1 hour
-            var token = jwt.sign(user , SECRET, {expiresIn : "1h"} , ()=>{
-
-            });
+            var token = jwt.sign(user , SECRET, {expiresIn : "1h"});
             res.send({ token });
 
-        } catch (err){
-            res.sendStatus(400);
+        } catch (err: any){
+            if(err.name === 'InvalidCredentials'){
+                console.log(err)
+                res.status(401).send("Incorrect username or password");
+                return;
+            }
+            res.sendStatus(500);
+            console.log(err);
             return;
         }
 

@@ -49,9 +49,9 @@ const BlogController: IBlogController =  {
                res.sendStatus(404);
                return;
             }
+            console.log(err);
             res.sendStatus(500);
         }
-        console.log('finished!')
 
     },
 

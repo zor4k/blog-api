@@ -7,15 +7,15 @@ import { PoolConnection } from "mysql2/typings/mysql";
 const HOST = process.env.SQL_HOST;
 const PASSWORD = process.env.SQL_PASSWORD;
 const DB = process.env.SQL_DB;
-const USER = process.env.USER;
+const USER = process.env.SQL_USER;
 
 const config={
 	host: HOST,
-	password: PASSWORD,
-	database: DB,
 	user: USER ,
+	database: DB,
+	password: PASSWORD,
 }
 
-const pool= require('mysql2/promise').createPool({config});
+const pool= require('mysql2/promise').createPool(config);
 
 export default pool;
