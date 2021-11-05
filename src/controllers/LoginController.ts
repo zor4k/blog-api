@@ -1,20 +1,33 @@
 import express from 'express';
-import crypto from 'crypto';
+import crypto, { generateKeySync } from 'crypto';
 import UserModel from '../models/UserModel';
 import { InvalidCredentialsError } from '../misc/Errors';
 import jwt, { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 import redis from 'redis';
+import { RedisClientType } from 'redis/dist/lib/client';
+import dayjs, { Dayjs } from "dayjs";
+
+
 const SECRET : string = process.env.SECRET || 'ONLY_FOR_TESTING';
+
 
 interface ILoginController {
     login(req: express.Request, res: express.Response ): Promise<void>
     logout(req: express.Request, res: express.Response ): Promise<void>
 }
 
-const redisClient = redis.createClient();
+let redisClient: RedisClientType;
+(async () => {
+    redisClient = require('redis').createClient();
 
+    redisClient.on('error', (err: any) => console.log('Redis Client Error', err));
+
+    await redisClient.connect();
+
+})();
 
 const LoginController :ILoginController = {
+
     login: async function (req: express.Request, res: express.Response ){
         const { email, username, password } = req.body;
         //TODO get the username OR email of the user
@@ -31,7 +44,6 @@ const LoginController :ILoginController = {
 
                 passwordHashDb = await UserModel.getPasswordHashByUsername(username);
                 if(passwordHash !== passwordHashDb){
-                    console.log('not true')
                     throw new InvalidCredentialsError("");
                 }
                 user = await UserModel.getUserByUsername(username);
@@ -68,17 +80,25 @@ const LoginController :ILoginController = {
 
     },
     logout :async  (req: express.Request, res: express.Response) => {
-        const userJwt = req.body.jwt;
+        const userJwt = req.body.token;
         try{
             const decoded : any = jwt.verify(userJwt, SECRET);
 
-            const secondsExpire = Date.now() - decoded.exp;
+            const secondsExpire: number = decoded.exp - dayjs().unix();
 
-            redisClient.SETEX(`blackList:${userJwt}`, secondsExpire ,"true" );
+            const redisQueryBlacklist = await  redisClient.GET(`blackList:${userJwt}`)
 
+            if(redisQueryBlacklist) {
+                res.sendStatus(401);
+                return; 
+            }
+            await redisClient.SETEX(`blackList:${userJwt}`, secondsExpire ,"true" );
+
+            res.sendStatus(200);
 
         } catch(err){
             res.sendStatus(401);
+            console.log(err);
         }
     }
 }

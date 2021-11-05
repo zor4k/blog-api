@@ -5,6 +5,7 @@ import blogModel, { IBlogModel, IPost } from '../models/BlogModel';
 // npm i --save-dev @types/jsonwebtoken
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import redis from "redis";
+import { RedisClientType } from "redis/dist/lib/client";
 
 const  SECRET  = process.env.SECRET || 'secret1288';
 
@@ -14,12 +15,23 @@ interface IBlogController{
     createPost(req: express.Request, res: express.Response): Promise<void>
     deletePost(req:express.Request, res:express.Response) : Promise<void>
     updatePost( req: express.Request, res:express.Response ): Promise<void>
-    
+
 }
 
-const redisClient = redis.createClient();
+// getting a redis clinet
+let redisClient: RedisClientType;
+(async () => {
+    redisClient = require('redis').createClient();
+
+    redisClient.on('error', (err: any) => console.log('Redis Client Error', err));
+
+    await redisClient.connect();
+
+})();
 
 const BlogController: IBlogController =  {
+
+
     getPosts: async (req: express.Request, res:express.Response)=>{
         try{
 
@@ -49,7 +61,7 @@ const BlogController: IBlogController =  {
                res.sendStatus(404);
                return;
             }
-            console.log(err);
+            console.log(err)
             res.sendStatus(500);
         }
 
@@ -69,11 +81,10 @@ const BlogController: IBlogController =  {
         // checking if the token is blacklisted 
         const token: string = (bearerHeader.split(' '))[1];
 
-        redisClient.GET(`blacklist:${token}`, function(err, reply){
-            if(!reply){
-                res.status(401).send({err: "An invalid token was sent"});
-            }
-        });
+        const redisResult = await redisClient.GET(`blacklist:${token}` );
+        if(!redisResult){
+            res.status(401).send({err: "An invalid token was sent"});
+        }
         
         let userId: string;
         try {
@@ -122,11 +133,11 @@ const BlogController: IBlogController =  {
         }
 
        const token: string = (bearerHeader.split(' '))[1];
-       redisClient.GET(`blacklist:${token}`, function(err, reply){
-            if(!reply){
-                res.status(401).send({err: "An invalid token was sent"});
-            }
-        });
+       const redisResult = redisClient.GET(`blacklist:${token}`)
+        if(!redisResult){
+            res.status(401).send({err: "An invalid token was sent"});
+        }
+
        try {
             jwt.verify(token, SECRET);
         } catch (err: any) {
@@ -152,11 +163,10 @@ const BlogController: IBlogController =  {
         // checking if the token is blacklisted 
         const token: string = (bearerHeader.split(' '))[1];
 
-        redisClient.GET(`blacklist:${token}`, function(err, reply){
-            if(!reply){
-                res.status(401).send({err: "An invalid token was sent"});
-            }
-        });
+        const redisResult = await redisClient.GET(`blacklist:${token}`);
+        if(!redisResult){
+            res.status(401).send({err: "An invalid token was sent"});
+        }
         
         try {
             jwt.verify(token, SECRET);
