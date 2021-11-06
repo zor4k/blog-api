@@ -90,7 +90,7 @@ const BlogController: IBlogController =  {
         try {
             const decoded = jwt.verify(token, SECRET);
             if( typeof decoded !== "string" ){
-                userId = decoded.userId;
+                userId = decoded.id;
 
             }else{
                 res.sendStatus(500);
@@ -106,7 +106,10 @@ const BlogController: IBlogController =  {
             return;
         }
 
-        const { title, id , content } = req.body;
+        const { title, content } = req.body;
+
+        const id = crypto.createHash('md5').update(title).digest('base64');
+
         // title string, id:string, content: string, userId:string
         // TODO need to get the user id
         try{
@@ -180,9 +183,11 @@ const BlogController: IBlogController =  {
             return;
         }
 
-        const { title, id , content } = req.body;
+        const { title , content } = req.body;
         // title string, id:string, content: string, userId:string
-        // TODO need to get the user id
+
+        const id = crypto.createHash('md5').update(title).digest('base64');
+
         try{
             await blogModel.updatePost(id, content , title)
             res.sendStatus(200);
