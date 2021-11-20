@@ -33,6 +33,6 @@ router.route("/logout")
     .post(LoginController.logout);
 
 // base endpoint for the application
-app.use( '/', router)
+app.use( '/api/', router)
 
 app.listen(PORT,() => console.log(`listening on port ${PORT}... `))
