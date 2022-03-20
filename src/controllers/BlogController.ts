@@ -86,7 +86,7 @@ const BlogController: IBlogController =  {
         const token: string = (bearerHeader.split(' '))[1];
 
         const redisResult = await redisClient.GET(`blacklist:${token}` );
-        if(!redisResult){
+        if(redisResult){
             res.status(401).send({err: "An invalid token was sent"});
         }
         
