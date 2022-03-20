@@ -7,7 +7,8 @@ interface IPost{
     id: string, 
     userName : string,
     userEmail: string,
-    content: string 
+    content: string,
+    datePosted: string
 }
 
 interface IBlogModel{
@@ -24,14 +25,15 @@ function rowToPost(row: any): IPost{
         id : row.id,
         userName:row.username, 
         userEmail: row.email,
-        content : row.content
+        content : row.content,
+        datePosted: row.datePosted
     }
 }
 
 const BlogModel: IBlogModel = {
 
         getPosts: async function() {
-            const sql =  `SELECT * FROM Post;`;
+            const sql =  `SELECT title,id,datePosted  FROM Post;`;
             
             const [rows,] = await pool.query(sql) ;
             return  rows.map( (row: Object) => rowToPost(row));
@@ -39,7 +41,7 @@ const BlogModel: IBlogModel = {
         },
         getPost: async function (id: string) {
             const sql = `SELECT Post.title, Post.id, Post.content, 
-            User.email, User.username  
+            User.email, User.username, Post.datePosted 
             FROM Post, User WHERE User.id = Post.userId AND Post.id =  ?`;
             const [rows,] = await pool.query(sql, id) as any;
 

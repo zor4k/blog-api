@@ -7,7 +7,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import redis from "redis";
 import { RedisClientType } from "redis/dist/lib/client";
 
-const  SECRET  = process.env.SECRET || 'secret1288';
+const SECRET  = process.env.SECRET || 'ONLY_FOR_TESTING';
 
 interface IBlogController{
     getPosts(req: express.Request, res:express.Response): Promise<void>
@@ -20,15 +20,19 @@ interface IBlogController{
 
 // getting a redis clinet
 let redisClient: RedisClientType;
-(async () => {
-    redisClient = require('redis').createClient();
+try {
+	(async () => {
+	    redisClient = require('redis').createClient();
 
-    redisClient.on('error', (err: any) => console.log('Redis Client Error', err));
+	    redisClient.on('error', (err: any) => console.log('Redis Client Error', err));
 
-    await redisClient.connect();
+	    await redisClient.connect();
 
-})();
-
+	})();
+} catch (err){
+	console.log('getting redis client ');
+	
+}
 const BlogController: IBlogController =  {
 
 
@@ -100,8 +104,11 @@ const BlogController: IBlogController =  {
         } catch (err: any) {
             if(err.name ==='JsonWebTokenError' ){
                 res.status(401).send({err: "An invalid token was sent."});
+            } else if (err.name === 'TokenExpiredError') {
+                res.status(401).send({err: "An invalid token was sent."});
             } else{
                 res.sendStatus(500);
+                console.log(err);
             }
             return;
         }
@@ -114,10 +121,14 @@ const BlogController: IBlogController =  {
         // TODO need to get the user id
         try{
             await blogModel.createPost(title, id , content, userId)
-            res.sendStatus(200);
+            res.sendStatus(201);
 
         } catch(err: any)
         {
+            if(err.code === 'ER_DUP_ENTRY'){
+                res.status(409).send({err: "A post with the given title already exists. " +
+                        "Use the PUT method to update it."})
+            }
             res.status(500).send();
             console.log(err);
             
@@ -167,7 +178,7 @@ const BlogController: IBlogController =  {
         const token: string = (bearerHeader.split(' '))[1];
 
         const redisResult = await redisClient.GET(`blacklist:${token}`);
-        if(!redisResult){
+        if(redisResult){
             res.status(401).send({err: "An invalid token was sent"});
         }
         
@@ -194,6 +205,7 @@ const BlogController: IBlogController =  {
 
         } catch(err: any)
         {
+            console.log(err.name)
             res.status(500).send();
             console.log(err);
             
