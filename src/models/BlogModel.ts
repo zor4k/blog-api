@@ -64,7 +64,7 @@ const BlogModel: IBlogModel = {
             await pool.query(sql, id);
         },
         updatePost: async function(id: string, content: string, title:string) {
-            const sql = `UPDATE POST SET content = ? AND title = ? WHERE id = ?`;
+            const sql = `UPDATE Post SET content = ? ,title = ? WHERE id = ?`;
             await pool.query(sql, [ content , title , id ]);
         },
 

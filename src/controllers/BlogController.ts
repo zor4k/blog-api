@@ -128,7 +128,9 @@ const BlogController: IBlogController =  {
             if(err.code === 'ER_DUP_ENTRY'){
                 res.status(409).send({err: "A post with the given title already exists. " +
                         "Use the PUT method to update it."})
+                return;
             }
+
             res.status(500).send();
             console.log(err);
             
