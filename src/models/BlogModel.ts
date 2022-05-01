@@ -14,7 +14,7 @@ interface IPost{
 interface IBlogModel{
     getPosts():Promise<IPost[]>
     getPost(id: string): Promise<IPost>
-    createPost(title: string, id:string, content: string, userId:string) : Promise<void>
+    createPost(title: string, id:string, content: string, userId:string, datePosted: string) : Promise<void>
     deletePost(id:string) : Promise<void>
     updatePost(id:string, content:string, title:string) : Promise<void>
 }
@@ -51,11 +51,12 @@ const BlogModel: IBlogModel = {
             return rowToPost(rows[0]);
 
         },
-        createPost: async function(title: string, id:string, content: string, userId:string) {
-            const sql = `INSERT INTO Post(title, id, userId, content) 
-                VALUES(? , ? , ? , ?)`;
+        createPost: async function(title: string, id:string, content: string, 
+            userId:string, datePosted: string) {
+            const sql = `INSERT INTO Post(title, id, userId, content, datePosted) 
+                VALUES(? , ? , ? , ?, ?)`;
 
-            await pool.query(sql, [ title, id, userId, content]);
+            await pool.query(sql, [ title, id, userId, content, datePosted]);
         },
 
         deletePost: async function(id: string) {

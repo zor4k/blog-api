@@ -6,8 +6,11 @@ import blogModel, { IBlogModel, IPost } from '../models/BlogModel';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import redis from "redis";
 import { RedisClientType } from "redis/dist/lib/client";
+import dayjs from "dayjs";
 
-const SECRET  = process.env.SECRET || 'ONLY_FOR_TESTING';
+const SECRET = process.env.SECRET || 'ONLY_FOR_TESTING';
+
+const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 
 interface IBlogController{
     getPosts(req: express.Request, res:express.Response): Promise<void>
@@ -22,7 +25,10 @@ interface IBlogController{
 let redisClient: RedisClientType;
 try {
 	(async () => {
-	    redisClient = require('redis').createClient();
+	    redisClient = require('redis').createClient({
+            host: REDIS_HOST,
+            port:"6379"
+        });
 
 	    redisClient.on('error', (err: any) => console.log('Redis Client Error', err));
 
@@ -120,7 +126,8 @@ const BlogController: IBlogController =  {
         // title string, id:string, content: string, userId:string
         // TODO need to get the user id
         try{
-            await blogModel.createPost(title, id , content, userId)
+            const currentDateTime = dayjs().toISOString().replace('T', ' ').replace('Z','');
+            await blogModel.createPost(title, id , content, userId, currentDateTime);
             res.sendStatus(201);
 
         } catch(err: any)
