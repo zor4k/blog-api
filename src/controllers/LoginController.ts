@@ -10,7 +10,7 @@ import dayjs, { Dayjs } from "dayjs";
 
 const SECRET : string = process.env.SECRET || 'ONLY_FOR_TESTING';
 
-const REDIS_HOST: string = process.env.REDIS_HOST || 'ONLY_FOR_TESTING';
+const REDIS_HOST: string = process.env.REDIS_HOST || 'localhost' ;
 
 
 interface ILoginController {
