@@ -21,13 +21,17 @@ interface IBlogController{
 
 }
 
+console.log("redis host: " + REDIS_HOST);
+
 // getting a redis clinet
 let redisClient: RedisClientType;
 try {
 	(async () => {
 	    redisClient = require('redis').createClient({
-            host: REDIS_HOST,
-            port:"6379"
+            socket: { 
+                host: REDIS_HOST,
+                port:"6379"
+            }
         });
 
 	    redisClient.on('error', (err: any) => console.log('Redis Client Error', err));

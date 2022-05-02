@@ -10,6 +10,8 @@ import dayjs, { Dayjs } from "dayjs";
 
 const SECRET : string = process.env.SECRET || 'ONLY_FOR_TESTING';
 
+const REDIS_HOST: string = process.env.REDIS_HOST || 'ONLY_FOR_TESTING';
+
 
 interface ILoginController {
     login(req: express.Request, res: express.Response ): Promise<void>
@@ -18,7 +20,13 @@ interface ILoginController {
 
 let redisClient: RedisClientType;
 (async () => {
-    redisClient = require('redis').createClient();
+
+    redisClient = require('redis').createClient({
+        socket: { 
+            host: REDIS_HOST,
+            port:"6379"
+        }
+    });
 
     redisClient.on('error', (err: any) => console.log('Redis Client Error', err));
 
